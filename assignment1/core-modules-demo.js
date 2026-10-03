@@ -7,12 +7,19 @@ if (!fs.existsSync(sampleFilesDir)) {
   fs.mkdirSync(sampleFilesDir, { recursive: true });
 }
 
-// OS module
+console.log('Platform:', os.platform());
+console.log('CPU:', os.cpus()[0]['model']);
+console.log('Total Memory:', os.totalmem());
 
+const breakPath = path.parse(sampleFilesDir);
+const gitkeep = path.join(breakPath.dir, '\sample-files\\.gitkeep');
+console.log('Joined path:', gitkeep);
 
-// Path module
+const fsPromises = fs.promises;
 
-// fs.promises API
+async function writeAndReadFile() {
+  await fsPromises.writeFile(__dirname + '\\sample-files\\demo.txt', 'Hello from fs.promises!');
+  return (console.log("fs.promises read:", await fsPromises.readFile(__dirname + "\\sample-files\\" + "demo.txt", "utf-8")));
+}
 
-
-// Streams for large files- log first 40 chars of each chunk
+writeAndReadFile();
