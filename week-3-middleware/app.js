@@ -12,6 +12,7 @@ app.use(express.static("public"));
 app.use((req, res, next) => {
   req.requestId = randomUUID();
   res.setHeader("X-Request-Id", req.requestId);
+  console.log('[timestamp]: GET /dogs', req.requestId);
   next();
 });
 

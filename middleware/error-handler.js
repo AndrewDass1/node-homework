@@ -1,6 +1,6 @@
 function errorHandler(err, req, res, next) {
-    res.status.json(500)({
-        message: 'Generic server occurred.'
+    res.status(500).json({
+        error: 'Internal Server Error.', requestId: req.requestId
     })
 }
 
