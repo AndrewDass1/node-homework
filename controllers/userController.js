@@ -15,10 +15,10 @@ function register(req, res){
 }
 
 function logon(req, res){
-    email = req.body.email;
-    password = req.body.password;
+    const email = req.body.email;
+    const password = req.body.password;
 
-    findingEmailPassword = global.users.find(user => user.email === email && user.password === password);
+    const findingEmailPassword = global.users.find(user => user.email === email && user.password === password);
 
     if(findingEmailPassword) {
         global.user_id = findingEmailPassword;
