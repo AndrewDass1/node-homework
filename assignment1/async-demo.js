@@ -7,16 +7,18 @@ const fsPromises = fs.promises;
 
   // Callback hell example (test and leave it in comments):
 async function makeFile(){
+  const filepath = __dirname + '\\sample-files\\sample.txt';
+  const content = 'Hello, async world! \n';
   try {
-    const fileIsMade = await fsPromises.writeFile((__dirname + '\\sample-files\\sample.txt'), 'Hello, async world! \n');
-    fileIsMade;
-
-    await fsPromises.readFile(__dirname + '\\sample-files\\sample.txt', 'utf-8', (err, content) => {
-      if(err){
-        console.log("An error occurred:", err.message);
-      }
-      console.log(content);  
-    }) 
+    fs.writeFile(filepath, content, (err, result) => {
+      const readingFile = fs.readFile(filepath, 'utf-8', callbackfunction => {
+          if(err){
+            console.log("An error occurred:", err.message);
+          }
+          console.log(content); 
+          return readingFile;
+      });
+    });
   }
   catch (err) {
     console.log("An error occurred:", err.message);
