@@ -12,7 +12,7 @@ app.use(express.static("public"));
 app.use((req, res, next) => {
   req.requestId = randomUUID();
   res.setHeader("X-Request-Id", req.requestId);
-  console.log(`[${new Date().toISOString()}]: ${req.method} ${req.path}', ${req.requestId}`);
+  console.log(`[${new Date().toISOString()}]: ${req.method} ${req.path} (${req.requestId})`);
   next();
 });
 
@@ -20,9 +20,9 @@ app.use((req, res, next) => {
 
 app.use("/", dogsRouter);// Do not remove this line
 
-app.use( (req, res) => res.status(404).json({message: `Route not found`}))
+app.use( (req, res) => res.status(404).json({error: `Route not found`, requestId: req.requestId}))
 
-app.use( (err, req, res, next) => res.status(500).json({message: 'Internal Server Error'}))
+app.use( (err, req, res, next) => res.status(500).json({error: 'Internal Server Error', requestId: req.requestId}))
 
 if (require.main === module) {
   app.listen(3000, () => {
