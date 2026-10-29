@@ -8,10 +8,7 @@ const taskCounter = (() => {
   };
 })();
 
-async function create(){
-  const { error, value } = taskSchema.validate(req.body, { abortEarly: false });
-
-  exports.register = async (req, res) => {
+exports.register = async (req, res) => {
   if (!req.body) req.body = {};
   const { error, value } = userSchema.validate(req.body, { abortEarly: false });
 
@@ -22,19 +19,28 @@ async function create(){
             message: error.message,
         });
         }
+  else {
+    return res.status(201).json({
+      message: newTask,
+    })
+  }
     };
+
+async function create(req, res){
+  const { error, value } = taskSchema.validate(req.body, { abortEarly: false });
 }
 
-async function index(){
+async function index(req, res){
   const userTasks = global.tasks.filter((task) => task.userId === global.user_id.email,)}
 
-async function show(){
+async function show(req, res){
   const taskId = parseInt(req.params?.id);
 
   const task = global.tasks.find(
     (task) => task.id === taskId && task.userId === global.user_id.email,
   );
 
+  const { userId, ...sanitizedTask } = task;
 
   if (!taskId) {
   return res.status(400).json({
@@ -46,11 +52,11 @@ async function show(){
     return res.status(404).json({message: "No matching task exists."})
   }
   else{
-    return res.status(200).json({message: global.tasks.find((task)=>task.id)})
+    return res.status(200).json({message: sanitizedTask})
   }
 }
 
-async function update(){
+async function update(req, res){
   const taskId = parseInt(req.params?.id);
 
   const { error, value } = userSchema.validate(req.body, {abortEarly: false,});
@@ -71,7 +77,7 @@ async function update(){
   }
 }
 
-async function deleteTask(){
+async function deleteTask(req, res){
   const taskId = parseInt(req.params?.id);
 
   const task = global.tasks.find(

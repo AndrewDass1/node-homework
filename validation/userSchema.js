@@ -15,14 +15,3 @@ const userSchema = Joi.object({
 });
 
 module.exports = { userSchema };
-
-
-
-// All Done (maybe except the trivial part):
-// user Joi to fulfill the requirements:
-// paterns to use : email: Joi.string().trim().lowercase().email().required()
-
-// requirements:s
-// email is required, trimmed, lowercased, and must be valid email format.
-// name is required, trimmed, and must be 3 to 30 characters.
-// password is required and must not be trivial.
