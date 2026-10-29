@@ -4,9 +4,14 @@ const { randomUUID } = require("crypto");
 
 const app = express();
 
+const authMiddleware = require("./middleware/auth");
+const taskRouter = require("./routes/taskRoutes");
+
 app.use(express.json());
 
 app.use(express.static("public"));
+
+app.use("/api/tasks", authMiddleware, taskRouter);
 
 // Assignment 3b and 3c ask you to add middleware in this file.
 app.use((req, res, next) => {
@@ -31,4 +36,3 @@ if (require.main === module) {
 }
 
 module.exports = app;
-
