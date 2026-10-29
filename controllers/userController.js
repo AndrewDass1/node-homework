@@ -16,18 +16,6 @@ async function comparePassword(inputPassword, storedHash) {
   return crypto.timingSafeEqual(keyBuffer, derivedKey);
 }
 
-exports.register = async (req, res) => {
-    if (!req.body) req.body = {};
-
-    const { error, value } = userSchema.validate(req.body, { abortEarly: false });
-
-    if (error) {
-        return res.status(400).json({
-            message: error.message,
-        });
-        }
-    };
-
 async function register(req, res){
     const hashedPassword = await hashPassword(value.password);
 
@@ -57,7 +45,7 @@ async function logon(req, res){
     const goodCredentials = user && await comparePassword(password, user.hashedPassword);
 
     if(findingEmailPassword) {
-        global.user_id = findingEmailPassword;
+        global.user_id = user.hashedPassword;
 
         res.status(200).json({
             name: global.user_id.name,
