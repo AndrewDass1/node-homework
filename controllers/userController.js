@@ -1,3 +1,5 @@
+const { userSchema } = require("../validation/userSchema");
+
 function register(req, res){
     const user = {
         name: req.body.name,
