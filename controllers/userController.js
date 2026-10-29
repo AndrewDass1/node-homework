@@ -1,6 +1,38 @@
 const { userSchema } = require("../validation/userSchema");
+const crypto = require("crypto");
+const util = require("util");
+const scrypt = util.promisify(crypto.scrypt);
 
-function register(req, res){
+async function hashPassword(password){
+  const salt = crypto.randomBytes(16).toString("hex");
+  const derivedKey = await scrypt(password, salt, 64);
+  return `${salt}:${derivedKey.toString("hex")}`;
+}
+
+async function comparePassword(inputPassword, storedHash) {
+  const [salt, key] = storedHash.split(":");
+  const keyBuffer = Buffer.from(key, "hex");
+  const derivedKey = await scrypt(inputPassword, salt, 64);
+  return crypto.timingSafeEqual(keyBuffer, derivedKey);
+}
+
+async function register(req, res){
+    const hashedPassword = await hashPassword(value.password);
+
+    const newUser = {email: value.email, name: value.name, hashedPassword};
+
+    exports.register = async (req, res) => {
+    if (!req.body) req.body = {};
+
+    const { error, value } = userSchema.validate(req.body, { abortEarly: false });
+
+    if (error) {
+        return res.status(400).json({
+            message: error.message,
+        });
+        }
+    };
+
     const user = {
         name: req.body.name,
         email: req.body.email,
@@ -16,11 +48,13 @@ function register(req, res){
     })
 }
 
-function logon(req, res){
+async function logon(req, res){
     const email = req.body.email;
     const password = req.body.password;
 
     const findingEmailPassword = global.users.find(user => user.email === email && user.password === password);
+
+    const goodCredentials = user && await comparePassword(password, user.hashedPassword);
 
     if(findingEmailPassword) {
         global.user_id = findingEmailPassword;
@@ -37,7 +71,7 @@ function logon(req, res){
     }
 }
 
-function logoff(req, res){
+async function logoff(req, res){
     global.user_id = null
     res.status(200).send()
 }
