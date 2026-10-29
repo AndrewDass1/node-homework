@@ -16,12 +16,7 @@ async function comparePassword(inputPassword, storedHash) {
   return crypto.timingSafeEqual(keyBuffer, derivedKey);
 }
 
-async function register(req, res){
-    const hashedPassword = await hashPassword(value.password);
-
-    const newUser = {email: value.email, name: value.name, hashedPassword};
-
-    exports.register = async (req, res) => {
+exports.register = async (req, res) => {
     if (!req.body) req.body = {};
 
     const { error, value } = userSchema.validate(req.body, { abortEarly: false });
@@ -33,10 +28,15 @@ async function register(req, res){
         }
     };
 
+async function register(req, res){
+    const hashedPassword = await hashPassword(value.password);
+
+    const newUser = {email: value.email, name: value.name, hashedPassword};
+
     const user = {
         name: req.body.name,
         email: req.body.email,
-        password: req.body.password,
+        password: hashedPassword,
     };
 
     global.users.push(user);
