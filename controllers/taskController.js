@@ -23,18 +23,25 @@ async function create(req, res){
   ...value,
   };
 
-  const {...sanitizedTask } = newTask;
+  const {userId, ...sanitizedTask } = newTask;
 
-  global.tasks.push(sanitizedTask);
+  global.tasks.push(newTask);
 
-  return res.status(201).json({
+  return res.status(200).json({
     message: (sanitizedTask),
   })
 
 }
 
 async function index(req, res){
-  const userTasks = global.tasks.filter((task) => task.userId === global.user_id.email,)
+  const userTasks = global.tasks.filter((task) =>
+    task.userId === global.user_id.email,
+)
+
+  const removeIdFromTask = userTasks.map( task => { 
+    const { userId, ...sanitizedTask} = task;
+    return sanitizedTask; 
+  })
 
   if(userTasks.length === 0){
     return res.status(404).json({
@@ -43,7 +50,7 @@ async function index(req, res){
   }
   else {
     return res.status(200).json({
-      message: (userTasks),
+      message: (removeIdFromTask),
     })
   }
 }
