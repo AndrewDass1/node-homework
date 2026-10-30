@@ -56,12 +56,12 @@ async function logon(req, res){
     const email = value.email;
     const password = value.password;
 
-    const findingEmailPassword = global.users.find(user => user.email === email && user.hashedPassword === comparePassword(password, user.hashedPassword));
+    const findingEmailPassword = global.users.find(user => user.email === email);
 
     const goodCredentials = findingEmailPassword && await comparePassword(password, findingEmailPassword.hashedPassword);
 
     if(goodCredentials) {
-        global.user_id = findingEmailPassword.hashedPassword;
+        global.user_id = findingEmailPassword;
 
         res.status(200).json({
             name: global.user_id.name,
