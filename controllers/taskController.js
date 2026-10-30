@@ -27,7 +27,7 @@ async function create(req, res){
 
   global.tasks.push(newTask);
 
-  return res.status(200).json({
+  return res.status(201).json({
     message: (sanitizedTask),
   })
 
@@ -38,21 +38,21 @@ async function index(req, res){
     task.userId === global.user_id.email,
 )
 
-  const removeIdFromTask = userTasks.map( task => { 
-    const { userId, ...sanitizedTask} = task;
-    return sanitizedTask; 
-  })
-
   if(userTasks.length === 0){
     return res.status(404).json({
       message: "No matching task exists."
     })
   }
-  else {
-    return res.status(200).json({
-      message: (removeIdFromTask),
-    })
-  }
+
+  const removeIdFromTask = userTasks.map( task => { 
+    const { userId, ...sanitizedTask} = task;
+    return sanitizedTask; 
+  })
+  
+  return res.status(200).json({
+    message: (removeIdFromTask),
+  })
+  
 }
 
 async function show(req, res){
