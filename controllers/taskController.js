@@ -11,13 +11,19 @@ const taskCounter = (() => {
 async function create(req, res){
   const { error, value } = taskSchema.validate(req.body, { abortEarly: false });
 
+  if (error) {
+    return res.status(400).json({
+      message: error.message,
+    });
+  } 
+
   const newTask = {
   id: taskCounter(),
   userId: global.user_id.email,
   ...value,
   };
 
-  const { userId, ...sanitizedTask } = task;
+  const {...sanitizedTask } = newTask;
 
   global.tasks.push(sanitizedTask);
 
@@ -30,14 +36,14 @@ async function create(req, res){
 async function index(req, res){
   const userTasks = global.tasks.filter((task) => task.userId === global.user_id.email,)
 
-  if(!userTasks){
+  if(userTasks.length === 0){
     return res.status(404).json({
       message: "No matching task exists."
     })
   }
   else {
-    return res.status(201).json({
-      message: (sanitizedTask),
+    return res.status(200).json({
+      message: (userTasks),
     })
   }
 }

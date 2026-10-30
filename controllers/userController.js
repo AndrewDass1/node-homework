@@ -2,6 +2,7 @@ const { userSchema } = require("../validation/userSchema");
 const crypto = require("crypto");
 const util = require("util");
 const scrypt = util.promisify(crypto.scrypt);
+const Joi = require("joi");
 
 async function hashPassword(password){
   const salt = crypto.randomBytes(16).toString("hex");
@@ -43,6 +44,19 @@ async function register(req, res){
 }
 
 async function logon(req, res){
+    const userSchema = Joi.object({
+        email: Joi.string().trim().lowercase().required().email(),
+        password: Joi.string()
+        .trim()
+        .min(8)
+        .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).+$/)
+        .required()
+        .messages({
+          "string.pattern.base":
+            "Password must be at least 8 characters long and include upper and lower case letters, a number, and a special character.",
+        }),
+    });
+
     const { error, value } = userSchema.validate(req.body, {
         abortEarly: false,
     });
@@ -65,7 +79,7 @@ async function logon(req, res){
 
         res.status(200).json({
             name: global.user_id.name,
-            email: global.user_id.email
+            email: global.user_id.email,
         })
     }
     else {
