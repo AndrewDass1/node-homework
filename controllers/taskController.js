@@ -8,24 +8,6 @@ const taskCounter = (() => {
   };
 })();
 
-exports.register = async (req, res) => {
-  if (!req.body) req.body = {};
-  const { error, value } = userSchema.validate(req.body, { abortEarly: false });
-
-  const newTask = { id: taskCounter(), userId: global.user_id.email, ...value };
-  
-  if (error) {
-        return res.status(400).json({
-            message: error.message,
-        });
-        }
-  else {
-    return res.status(201).json({
-      message: newTask,
-    })
-  }
-    };
-
 async function create(req, res){
   const { error, value } = taskSchema.validate(req.body, { abortEarly: false });
 

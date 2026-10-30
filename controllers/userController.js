@@ -17,35 +17,51 @@ async function comparePassword(inputPassword, storedHash) {
 }
 
 async function register(req, res){
+    const { error, value } = userSchema.validate(req.body, {
+        abortEarly: false,
+    });
+
+    if (error) {
+        return res.status(400).json({
+            message: error.message,
+        });
+    } 
+
     const hashedPassword = await hashPassword(value.password);
 
     const newUser = {email: value.email, name: value.name, hashedPassword};
 
-    const user = {
-        name: req.body.name,
-        email: req.body.email,
-        password: hashedPassword,
-    };
+    global.users.push(newUser);
+    global.user_id = newUser;
 
-    global.users.push(user);
-    global.user_id = user;
-    
+
     res.status(201).json({
         name: global.user_id.name,
         email: global.user_id.email
     })
+
 }
 
 async function logon(req, res){
-    const email = req.body.email;
-    const password = req.body.password;
+    const { error, value } = userSchema.validate(req.body, {
+        abortEarly: false,
+    });
 
-    const findingEmailPassword = global.users.find(user => user.email === email && user.password === password);
+    if (error) {
+        return res.status(400).json({
+            message: error.message,
+        });
+    } 
 
-    const goodCredentials = user && await comparePassword(password, user.hashedPassword);
+    const email = value.email;
+    const password = value.password;
 
-    if(findingEmailPassword) {
-        global.user_id = user.hashedPassword;
+    const findingEmailPassword = global.users.find(user => user.email === email && user.hashedPassword === comparePassword(password, user.hashedPassword));
+
+    const goodCredentials = findingEmailPassword && await comparePassword(password, findingEmailPassword.hashedPassword);
+
+    if(goodCredentials) {
+        global.user_id = findingEmailPassword.hashedPassword;
 
         res.status(200).json({
             name: global.user_id.name,
