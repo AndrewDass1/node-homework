@@ -80,7 +80,7 @@ async function show(req, res){
 async function update(req, res){
   const taskId = parseInt(req.params?.id);
 
-  const { error, value } = taskSchema.validate(req.body, {abortEarly: false,});
+  const { error, value } = patchTaskSchema.validate(req.body, {abortEarly: false,});
 
   const task = global.tasks.find(
     (task) => task.id === taskId && task.userId === global.user_id.email,
@@ -108,7 +108,7 @@ async function deleteTask(req, res){
   const taskId = parseInt(req.params?.id);
 
 
-  if (!taskID) {
+  if (!taskId) {
     return res.status(400).json({
       message: "The task ID passed is not valid.",
     });
@@ -118,7 +118,7 @@ async function deleteTask(req, res){
     (task) => task.id === taskId && task.userId === global.user_id.email,
   );
 
-  if (!taskIndex) {
+  if (taskIndex === -1) {
     return res.status(404).json({
       message: "The task ID passed is not valid.",
     });
