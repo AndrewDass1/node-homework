@@ -27,9 +27,8 @@ async function create(req, res){
 
   global.tasks.push(newTask);
 
-  return res.status(201).json({
-    message: (sanitizedTask),
-  })
+
+  return res.status(201).json(sanitizedTask)
 
 }
 
@@ -49,9 +48,7 @@ async function index(req, res){
     return sanitizedTask; 
   })
   
-  return res.status(200).json({
-    message: (removeIdFromTask),
-  })
+  return res.status(200).json(removeIdFromTask)
   
 }
 
@@ -83,13 +80,11 @@ async function show(req, res){
 async function update(req, res){
   const taskId = parseInt(req.params?.id);
 
-  const { error, value } = userSchema.validate(req.body, {abortEarly: false,});
+  const { error, value } = taskSchema.validate(req.body, {abortEarly: false,});
 
   const task = global.tasks.find(
     (task) => task.id === taskId && task.userId === global.user_id.email,
   );
-
-  const { userId, ...sanitizedTask } = task;
 
   if (error) {
     return res.status(400).json({
@@ -97,36 +92,45 @@ async function update(req, res){
     });
   }
 
-  if (!taskId) {
-  return res.status(404).json({
-    message: "The task ID passed is not valid.",
-  });
+  if (!task) {
+  return res.status(404).json("The task ID passed is not valid.");
   }
   else{
-    return res.status(200).json({sanitizedTask});
+    Object.assign(task, value);
+
+    const { userId, ...sanitizedTask } = task;
+
+    return res.status(200).json(sanitizedTask);
   }
 }
 
 async function deleteTask(req, res){
   const taskId = parseInt(req.params?.id);
 
-  const task = global.tasks.find(
+
+  if (!taskID) {
+    return res.status(400).json({
+      message: "The task ID passed is not valid.",
+    });
+  } 
+  
+  const taskIndex = global.tasks.findIndex(
     (task) => task.id === taskId && task.userId === global.user_id.email,
   );
 
-  if (!taskId) {
-  return res.status(400).json({
-    message: "The task ID passed is not valid.",
-  });
-  }  
-
-  if (!task) {
+  if (!taskIndex) {
     return res.status(404).json({
       message: "The task ID passed is not valid.",
     });
   }
   else {
-    return res.status(200).json({message: global.tasks.find((task)=>task.id)})
+    const task = global.tasks[taskIndex];
+
+    global.tasks.splice(taskIndex, 1);
+
+    const { userId, ...sanitizedTask } = task;
+
+    return res.status(200).json(sanitizedTask);
   }
 }
 
