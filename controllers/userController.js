@@ -23,19 +23,41 @@ async function register(req, res){
     const { error, value } = userSchema.validate(req.body, {
         abortEarly: false,
     });
-
+    
     if (error) {
-        return res.status(400).json({
-            message: error.message,
-        });
-    } 
+    return res.status(400).json({
+      message: "Validation failed",
+      details: error.details,
+    });
+  }
+    result = null;
+    value.hashed_password = await hashPassword(value.password);
+    // the code to here is like the in-memory version
+    try {
+        result = await pool.query(`INSERT INTO users (email, name, hashed_password)
+        VALUES ($1, $2, $3) RETURNING id, email, name`,
+        [value.email, value.name, value.hashed_password]
+        ); // note that you use a parameterized query
+    } catch (e) { // the email might already be registered
+    if (e.code === "23505") { // this means the unique constraint for email was violated
+        // here you return the 400 and the error message.  Use a return statement, so that 
+        // you don't keep going in this function
+    }
+    return next(e); // all other errors get passed to the error handler
+    }
+    const user = result.rows[0];
+    // otherwise user now contains the new user.  You can return a 201 and the appropriate
+    // object.  Be sure to also set global.user_id with the id of the user record you just created.
 
-    const hashedPassword = await hashPassword(value.password);
+    // --------------------------------------------------------------------------------------------------------------------------------
 
-    const newUser = {email: value.email, name: value.name, hashedPassword};
+    // Old Code:
+    // const hashedPassword = await hashPassword(value.password);
 
-    global.users.push(newUser);
-    global.user_id = newUser;
+    // const newUser = {email: value.email, name: value.name, hashedPassword};
+
+    // global.users.push(newUser);
+    // global.user_id = newUser;
 
 
     res.status(201).json({
@@ -72,41 +94,15 @@ async function logon(req, res){
     const email = value.email;
     const password = value.password;
 
-    const findingEmailPassword = global.users.find(user => user.email === email);
+    // Old Code:
+    // const findingEmailPassword = global.users.find(user => user.email === email);
 
     const result = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
 
-    if (error) {
-    return res.status(400).json({
-      message: "Validation failed",
-      details: error.details,
-    });
-  }
-    result = null;
-    value.hashed_password = await hashPassword(value.password);
-    // the code to here is like the in-memory version
-    try {
-        result = await pool.query(`INSERT INTO users (email, name, hashed_password)
-        VALUES ($1, $2, $3) RETURNING id, email, name`,
-        [value.email, value.name, value.hashed_password]
-        ); // note that you use a parameterized query
-    } catch (e) { // the email might already be registered
-    if (e.code === "23505") { // this means the unique constraint for email was violated
-        // here you return the 400 and the error message.  Use a return statement, so that 
-        // you don't keep going in this function
-    }
-    return next(e); // all other errors get passed to the error handler
-    }
-    const user = result.rows[0];
-    // otherwise user now contains the new user.  You can return a 201 and the appropriate
-    // object.  Be sure to also set global.user_id with the id of the user record you just created.
-
-    // --------------------------------------------------------------------------------------------------------------------------------
-
-    const goodCredentials = findingEmailPassword && await comparePassword(password, findingEmailPassword.hashedPassword);
+    const goodCredentials = result && await comparePassword(password, results.rows[0].hashedPassword);
 
     if(goodCredentials) {
-        global.user_id = findingEmailPassword;
+        global.user_id = result.rows[0].id;
 
         res.status(200).json({
             name: global.user_id.name,
