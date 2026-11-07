@@ -1,4 +1,6 @@
 const { taskSchema, patchTaskSchema } = require("../validation/taskSchema");
+// const userSchema = require("../validation/userSchema");
+// const Joi = require("joi");
 
 const taskCounter = (() => {
   let lastTaskNumber = 0;
@@ -17,47 +19,63 @@ async function create(req, res){
     });
   } 
 
-  const newTask = {
-  id: taskCounter(),
-  userId: global.user_id.email,
-  ...value,
-  };
+  const result = await pool.query(`INSERT INTO tasks (title, is_completed, user_id)
+  VALUES ( $1, $2, $3 ) RETURNING id, title, is_completed`,
+  [value.title, value.isCompleted, global.user_id]);
 
-  const {userId, ...sanitizedTask } = newTask;
+  const task = result.rows[0];
 
-  global.tasks.push(newTask);
+  // const newTask = {
+  // id: taskCounter(),
+  // userId: global.user_id.email,
+  // ...value,
+  // };
+
+  // const {userId, ...sanitizedTask } = task;
+  // global.tasks.push(task);
 
 
-  return res.status(201).json(sanitizedTask)
+  return res.status(201).json(task)
 
 }
 
 async function index(req, res){
-  const userTasks = global.tasks.filter((task) =>
-    task.userId === global.user_id.email,
-)
+//   const userTasks = global.tasks.filter((task) =>
+//     task.userId === global.user_id.email,
+// )
+  const result = await pool.query("SELECT id, title, is_completed FROM tasks WHERE user_id = $1",
+    [global.user_id]
+  )
+  
+  const tasks = result.rows;
 
-  if(userTasks.length === 0){
+  if(tasks.length === 0){
     return res.status(404).json({
       message: "No matching task exists."
     })
   }
 
-  const removeIdFromTask = userTasks.map( task => { 
-    const { userId, ...sanitizedTask} = task;
-    return sanitizedTask; 
-  })
+  // const removeIdFromTask = userTasks.map( task => { 
+  //   const { userId, ...sanitizedTask} = task;
+  //   return sanitizedTask; 
+  // })
   
-  return res.status(200).json(removeIdFromTask)
+  return res.status(200).json(tasks);
   
 }
 
 async function show(req, res){
-  const taskId = parseInt(req.params?.id);
+  // const taskId = parseInt(req.params?.id);
 
-  const task = global.tasks.find(
-    (task) => task.id === taskId && task.userId === global.user_id.email,
-  );
+  // const task = global.tasks.find(
+  //   (task) => task.id === taskId && task.userId === global.user_id.email,
+  // );
+
+  const { error, value } = patchTaskSchema.validate(req.body, {abortEarly: false,});
+
+  let keys = Object.keys(value);
+
+  
 
 
   if (!taskId) {
@@ -78,13 +96,9 @@ async function show(req, res){
 }
 
 async function update(req, res){
-  const taskId = parseInt(req.params?.id);
+  // const taskId = parseInt(req.params?.id);
 
   const { error, value } = patchTaskSchema.validate(req.body, {abortEarly: false,});
-
-  const task = global.tasks.find(
-    (task) => task.id === taskId && task.userId === global.user_id.email,
-  );
 
   if (error) {
     return res.status(400).json({
@@ -92,16 +106,40 @@ async function update(req, res){
     });
   }
 
-  if (!task) {
-  return res.status(404).json("The task ID passed is not valid.");
-  }
-  else{
-    Object.assign(task, value);
+  let keys = Object.keys(value);
+  keys = keys.map((key) => key === "isCompleted" ? "is_completed" : key);
 
-    const { userId, ...sanitizedTask } = task;
+  const setClauses = keys.map((key, i) => `${key} = $${i + 1}`).join(", ");
+  const idParm = `$${keys.length + 1}`;
+  const userParm = `$${keys.length + 2}`;
+  const result = await pool.query(`UPDATE tasks SET ${setClauses}
 
-    return res.status(200).json(sanitizedTask);
+    WHERE id = ${idParm} AND user_id = ${userParm} RETURNING id, title, is_completed`, 
+    [...Object.values(value), req.params.id, global.user_id]);
+  const updatedTask = result.rows[0];
+
+  if (!updatedTask) {
+    return res.status(404).json("The task ID passed is not valid.");
   }
+  else {
+    return res.status(200).json(updatedTask);
+  }
+
+
+  // const task = global.tasks.find(
+  //   (task) => task.id === taskId && task.userId === global.user_id.email,
+  // );
+
+  // if (!task) {
+  // return res.status(404).json("The task ID passed is not valid.");
+  // }
+  // else{
+  //   Object.assign(task, value);
+
+  //   const { userId, ...sanitizedTask } = task;
+
+  //   return res.status(200).json(sanitizedTask);
+  // }
 }
 
 async function deleteTask(req, res){
