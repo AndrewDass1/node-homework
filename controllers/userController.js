@@ -4,6 +4,8 @@ const util = require("util");
 const scrypt = util.promisify(crypto.scrypt);
 const Joi = require("joi");
 
+const pool = require("./db/pg-pool");
+
 async function hashPassword(password){
   const salt = crypto.randomBytes(16).toString("hex");
   const derivedKey = await scrypt(password, salt, 64);
@@ -71,6 +73,35 @@ async function logon(req, res){
     const password = value.password;
 
     const findingEmailPassword = global.users.find(user => user.email === email);
+
+    const result = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
+
+    if (error) {
+    return res.status(400).json({
+      message: "Validation failed",
+      details: error.details,
+    });
+  }
+    result = null;
+    value.hashed_password = await hashPassword(value.password);
+    // the code to here is like the in-memory version
+    try {
+        result = await pool.query(`INSERT INTO users (email, name, hashed_password)
+        VALUES ($1, $2, $3) RETURNING id, email, name`,
+        [value.email, value.name, value.hashed_password]
+        ); // note that you use a parameterized query
+    } catch (e) { // the email might already be registered
+    if (e.code === "23505") { // this means the unique constraint for email was violated
+        // here you return the 400 and the error message.  Use a return statement, so that 
+        // you don't keep going in this function
+    }
+    return next(e); // all other errors get passed to the error handler
+    }
+    const user = result.rows[0];
+    // otherwise user now contains the new user.  You can return a 201 and the appropriate
+    // object.  Be sure to also set global.user_id with the id of the user record you just created.
+
+    // --------------------------------------------------------------------------------------------------------------------------------
 
     const goodCredentials = findingEmailPassword && await comparePassword(password, findingEmailPassword.hashedPassword);
 
