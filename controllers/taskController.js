@@ -1,6 +1,4 @@
 const { taskSchema, patchTaskSchema } = require("../validation/taskSchema");
-// const userSchema = require("../validation/userSchema");
-// const Joi = require("joi");
 
 const taskCounter = (() => {
   let lastTaskNumber = 0;
@@ -25,24 +23,12 @@ async function create(req, res){
 
   const task = result.rows[0];
 
-  // const newTask = {
-  // id: taskCounter(),
-  // userId: global.user_id.email,
-  // ...value,
-  // };
-
-  // const {userId, ...sanitizedTask } = task;
-  // global.tasks.push(task);
-
 
   return res.status(201).json(task)
 
 }
 
 async function index(req, res){
-//   const userTasks = global.tasks.filter((task) =>
-//     task.userId === global.user_id.email,
-// )
   const result = await pool.query("SELECT id, title, is_completed FROM tasks WHERE user_id = $1",
     [global.user_id]
   )
@@ -54,49 +40,34 @@ async function index(req, res){
       message: "No matching task exists."
     })
   }
-
-  // const removeIdFromTask = userTasks.map( task => { 
-  //   const { userId, ...sanitizedTask} = task;
-  //   return sanitizedTask; 
-  // })
   
   return res.status(200).json(tasks);
   
 }
 
 async function show(req, res){
-  // const taskId = parseInt(req.params?.id);
+  const taskId = parseInt(req.params?.id);
 
-  // const task = global.tasks.find(
-  //   (task) => task.id === taskId && task.userId === global.user_id.email,
-  // );
-
-  const { error, value } = patchTaskSchema.validate(req.body, {abortEarly: false,});
-
-  let keys = Object.keys(value);
-
-  
-
-
-  if (!taskId) {
+  if (!taskId || taskId < 0 || taskId != parseInt(req.params?.id, 10) ) {
     return res.status(400).json({
       message: "The task ID passed is not valid.",
     });
   }
 
-  if(!task) {
-    return res.status(404).json({message: "No matching task exists."})
-  }
-  else{
-    const { userId, ...sanitizedTask } = task;
-    return res.status(200).json({message: sanitizedTask})
-  }
+  const result = await pool.query("SELECT id, title, is_completed FROM tasks WHERE id = $1 AND user_id = $2",
+    [taskId, global.user_id]
+  )
 
+
+  if(result.rows.length === 0){
+    return res.status(404).json({message: "The task ID passed is not valid."})
+  }
+  else
+    {  return res.status(200).json({message: result.rows[0]}) }
   
 }
 
 async function update(req, res){
-  // const taskId = parseInt(req.params?.id);
 
   const { error, value } = patchTaskSchema.validate(req.body, {abortEarly: false,});
 
@@ -125,51 +96,26 @@ async function update(req, res){
     return res.status(200).json(updatedTask);
   }
 
-
-  // const task = global.tasks.find(
-  //   (task) => task.id === taskId && task.userId === global.user_id.email,
-  // );
-
-  // if (!task) {
-  // return res.status(404).json("The task ID passed is not valid.");
-  // }
-  // else{
-  //   Object.assign(task, value);
-
-  //   const { userId, ...sanitizedTask } = task;
-
-  //   return res.status(200).json(sanitizedTask);
-  // }
 }
 
 async function deleteTask(req, res){
-  const taskId = parseInt(req.params?.id);
+  const taskId = Number(req.params?.id);
 
-
-  if (!taskId) {
+  if (taskId <= 0 || !Number.isInteger(taskId) ) {
     return res.status(400).json({
       message: "The task ID passed is not valid.",
     });
-  } 
+  }
   
-  const taskIndex = global.tasks.findIndex(
-    (task) => task.id === taskId && task.userId === global.user_id.email,
-  );
+  const result = await pool.query("DELETE FROM tasks WHERE id = $1 AND user_id = $2 RETURNING id, title, is_completed", [taskId, global.user_id])
 
-  if (taskIndex === -1) {
-    return res.status(404).json({
-      message: "The task ID passed is not valid.",
-    });
+  if(result.rows.length === 0){
+    return res.status(404).json({message: "The task ID passed is not valid"})
   }
   else {
-    const task = global.tasks[taskIndex];
-
-    global.tasks.splice(taskIndex, 1);
-
-    const { userId, ...sanitizedTask } = task;
-
-    return res.status(200).json(sanitizedTask);
+    return res.status(200).json(result.rows[0])
   }
+
 }
 
 module.exports = {create, index, show, update, deleteTask};
