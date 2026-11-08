@@ -4,7 +4,7 @@ const util = require("util");
 const scrypt = util.promisify(crypto.scrypt);
 const Joi = require("joi");
 
-const pool = require("./db/pg-pool");
+const pool = require("../db/pg-pool");
 
 async function hashPassword(password){
   const salt = crypto.randomBytes(16).toString("hex");
@@ -82,7 +82,7 @@ async function logon(req, res){
     const result = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
 
     if (result.rows.length === 0) {
-        return res.status(404).json({message: "No data found."})
+        return res.status(401).json({message: "No data found."})
     }
 
     const goodCredentials = result && await comparePassword(password, result.rows[0].hashed_password);
