@@ -13,8 +13,6 @@ const taskRouter = require("./routes/taskRoutes");
 const pool = require("./db/pg-pool");
 
 global.user_id = null;
-global.users = [];
-global.tasks = [];
 
 app.use(express.json());
 
