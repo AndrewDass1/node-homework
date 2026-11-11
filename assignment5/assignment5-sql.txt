@@ -52,13 +52,13 @@ WHERE c.customer_name = 'Perez and Sons' AND e.first_name = 'Miranda' AND e.last
 RETURNING order_id;
 
 INSERT INTO line_items (product_id, order_id, quantity)
-VALUES (23, 1, 10), (18, 1, 10), (43, 1, 10), (9, 1, 10), (44, 1, 10); 
+VALUES (23, 232, 10), (18, 232, 10), (43, 232, 10), (9, 232, 10), (44, 232, 10); 
 
 COMMIT;
 
 SELECT *
 FROM line_items
-WHERE order_id = 1;
+WHERE order_id = 232;
 
 
 Task 4
