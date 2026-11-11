@@ -52,19 +52,13 @@ WHERE c.customer_name = 'Perez and Sons' AND e.first_name = 'Miranda' AND e.last
 RETURNING order_id;
 
 INSERT INTO line_items (product_id, order_id, quantity)
-SELECT product_id, (SELECT MAX(order_id) FROM orders), 10
-FROM products
-ORDER BY Price
-LIMIT 5;
+VALUES (23, 1, 10), (18, 1, 10), (43, 1, 10), (9, 1, 10), (44, 1, 10); 
 
 COMMIT;
 
 SELECT *
 FROM line_items
-WHERE order_id = (
-	SELECT MAX(order_id)
-	FROM orders
-);
+WHERE order_id = 1;
 
 
 Task 4
