@@ -4,7 +4,9 @@ const util = require("util");
 const scrypt = util.promisify(crypto.scrypt);
 const Joi = require("joi");
 
-const pool = require("../db/pg-pool");
+// const pool = require("../db/pg-pool");
+const prisma = require("./db/prisma");
+
 
 async function hashPassword(password){
   const salt = crypto.randomBytes(16).toString("hex");
@@ -30,14 +32,23 @@ async function register(req, res, next){
       details: error.details,
     });
   }
-    let result = null;
+    let user = null;
     value.hashed_password = await hashPassword(value.password);
     try {
-        result = await pool.query(`INSERT INTO users (email, name, hashed_password) VALUES ($1, $2, $3) RETURNING id, email, name`, [value.email, value.name, value.hashed_password]); // note that you use a parameterized query
+        // result = await pool.query(`INSERT INTO users (email, name, hashed_password) VALUES ($1, $2, $3) RETURNING id, email, name`, [value.email, value.name, value.hashed_password]); // note that you use a parameterized query
+        user = await prisma.user.create({
+            data: {name, email, hashedPassword},
+            select: {name: true, email: true, id: true}
+        })
     } catch (e) {
-    if (e.code === "23505") { 
-        return res.status(400).json({message: e.message})
-    }
+        if (e.code === "23505") { 
+            return res.status(400).json({message: e.message})
+        }
+        if (e.name === "PrismaClientKnownRequestError" && err.code === "P2002") {
+            return res.status(400).json({
+                error: "User with this email already exists"
+            });
+        }
     return next(e); 
     }
 
@@ -77,9 +88,11 @@ async function logon(req, res){
     } 
 
     const email = value.email;
+    email = email.toLowerCase()
     const password = value.password;
 
-    const result = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
+    // const result = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
+    const user = await prisma.user.findUnique({ where: { email }});
 
     if (result.rows.length === 0) {
         return res.status(401).json({message: "No data found."})

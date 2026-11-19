@@ -10,7 +10,8 @@ const { errorHandler } = require('./middleware/error-handler');
 const authMiddleware = require("./middleware/auth");
 const taskRouter = require("./routes/taskRoutes");
 
-const pool = require("./db/pg-pool");
+// const pool = require("./db/pg-pool");
+const prisma = require("./db/prisma");
 
 global.user_id = null;
 
@@ -26,10 +27,10 @@ app.get("/", (req, res) => {
 
 app.get("/health", async (req, res) => {
   try {
-    await pool.query("SELECT 1");
+    await prisma.$queryRaw`SELECT 1`;
     res.json({ status: "ok", db: "connected" });
   } catch (err) {
-    res.status(500).json({ message: `db not connected, error: ${ err.message }` });
+    res.status(500).json({ status:'error', db: 'not connected', error: err.message });
   }
 });
 
@@ -60,7 +61,9 @@ async function shutdown(code = 0) {
   if (isShuttingDown) return;
   isShuttingDown = true;
 
-  console.log("Shutting down gracefully...");
+  // console.log("Shutting down gracefully...");
+  await prisma.$disconnect();
+  console.log("Prisma disconnected");
 
   try {
     await new Promise((resolve, reject) => {
