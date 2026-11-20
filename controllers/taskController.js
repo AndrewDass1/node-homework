@@ -112,7 +112,7 @@ async function update(req, res){
   }
 }
 
-async function deleteTask(req, res){
+async function deleteTask(req, res, next){
   const taskId = Number(req.params?.id);
 
   if (taskId <= 0 || !Number.isInteger(taskId) ) {
@@ -124,28 +124,24 @@ async function deleteTask(req, res){
   // const result = await pool.query("DELETE FROM tasks WHERE id = $1 AND user_id = $2 RETURNING id, title, is_completed", [taskId, global.user_id])
 
   try {
-    const task = await prisma.task.update({
-        data: value,
+    const task = await prisma.task.delete({
         where: {
-          id,
-          userId: global.user_id,
+        id_userId: {
+          id: taskId,
+          userId: global.user_id
+          }
         },
-        select: { taskId: true, userId: true}
-    });
+        select: { id: true, userId: true}
+    }
+  );
+    return res.status(200).json(task);
   } catch (err) {
     if (err.code === "P2025" ) {
       return res.status(404).json({ message: "The task was not found."})
     } else {
       return next(err); // pass other errors to the global error handler
     }
-  }
-
-  if(task === null){
-    return res.status(404).json({message: "The task ID passed is not valid"})
-  }
-  else {
-    return res.status(200).json(task[0])
-  }
+  }  
 
 }
 
