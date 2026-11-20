@@ -5,7 +5,7 @@ const scrypt = util.promisify(crypto.scrypt);
 const Joi = require("joi");
 
 // const pool = require("../db/pg-pool");
-const prisma = require("./db/prisma");
+const prisma = require("../db/prisma.js");
 
 
 async function hashPassword(password){
@@ -33,18 +33,21 @@ async function register(req, res, next){
     });
   }
     let user = null;
-    value.hashed_password = await hashPassword(value.password);
+    const name = value.name;
+    const email = value.email;
+    const hashedPassword = await hashPassword(value.password);
     try {
         // result = await pool.query(`INSERT INTO users (email, name, hashed_password) VALUES ($1, $2, $3) RETURNING id, email, name`, [value.email, value.name, value.hashed_password]); // note that you use a parameterized query
         user = await prisma.user.create({
             data: {name, email, hashedPassword},
             select: {name: true, email: true, id: true}
         })
+        console.log(user)
     } catch (e) {
         if (e.code === "23505") { 
             return res.status(400).json({message: e.message})
         }
-        if (e.name === "PrismaClientKnownRequestError" && err.code === "P2002") {
+        if (e.name === "PrismaClientKnownRequestError" && e.code === "P2002") {
             return res.status(400).json({
                 error: "User with this email already exists"
             });
@@ -52,7 +55,7 @@ async function register(req, res, next){
     return next(e); 
     }
 
-    const newUser = result.rows[0];
+    const newUser = user;
     global.user_id = newUser.id;
 
 
@@ -87,25 +90,24 @@ async function logon(req, res){
         });
     } 
 
-    const email = value.email;
-    email = email.toLowerCase()
+    let email = value.email;
     const password = value.password;
 
     // const result = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
     const user = await prisma.user.findUnique({ where: { email }});
 
-    if (result.rows.length === 0) {
+    if (user === null) {
         return res.status(401).json({message: "No data found."})
     }
 
-    const goodCredentials = result && await comparePassword(password, result.rows[0].hashed_password);
+    const goodCredentials = user && await comparePassword(password, user.hashedPassword);
 
     if(goodCredentials) {
-        global.user_id = result.rows[0].id;
+        global.user_id = user.id;
 
         res.status(200).json({
-            name: result.rows[0].name,
-            email: result.rows[0].email,
+            name: user.name,
+            email: user.email,
         })
     }
     else {
