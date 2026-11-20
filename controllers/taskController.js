@@ -18,24 +18,18 @@ async function create(req, res){
     });
   } 
 
-  // const result = await pool.query(`INSERT INTO tasks (title, is_completed, user_id)
-  // VALUES ( $1, $2, $3 ) RETURNING id, title, is_completed`,
-  // [value.title, value.isCompleted, global.user_id]);
 
   const task = await prisma.task.create({
       data: { ...value,
         userId: global.user_id,
       },
-      select: { title: true, isCompleted: true, userId: true }
+      select: { title: true, isCompleted: true, userId: true, id: true }
   });
 
   return res.status(201).json(task)
 }
 
 async function index(req, res){
-  // const result = await pool.query("SELECT id, title, is_completed FROM tasks WHERE user_id = $1",
-  //   [global.user_id]
-  // )
   const task = await prisma.task.findMany({
     where: {
       userId: global.user_id,
@@ -121,8 +115,6 @@ async function deleteTask(req, res, next){
     });
   }
   
-  // const result = await pool.query("DELETE FROM tasks WHERE id = $1 AND user_id = $2 RETURNING id, title, is_completed", [taskId, global.user_id])
-
   try {
     const task = await prisma.task.delete({
         where: {
