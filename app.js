@@ -10,7 +10,7 @@ const { errorHandler } = require('./middleware/error-handler');
 const authMiddleware = require("./middleware/auth");
 const taskRouter = require("./routes/taskRoutes");
 
-const prisma = require("../db/prisma.js");
+const prisma = require("./db/prisma.js");
 
 global.user_id = null;
 
