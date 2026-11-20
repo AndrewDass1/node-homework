@@ -40,7 +40,7 @@ async function index(req, res){
     where: {
       userId: global.user_id,
     },
-    select: {userId: true}
+    select: {title: true, isCompleted: true, id: true}
   });
 
   if(task.length === 0){
