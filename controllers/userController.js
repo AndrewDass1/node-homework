@@ -35,7 +35,6 @@ async function register(req, res, next){
     const email = value.email;
     const hashedPassword = await hashPassword(value.password);
     try {
-        // result = await pool.query(`INSERT INTO users (email, name, hashed_password) VALUES ($1, $2, $3) RETURNING id, email, name`, [value.email, value.name, value.hashed_password]); // note that you use a parameterized query
         user = await prisma.user.create({
             data: {name, email, hashedPassword},
             select: {name: true, email: true, id: true}
@@ -91,7 +90,6 @@ async function logon(req, res){
     let email = value.email;
     const password = value.password;
 
-    // const result = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
     const user = await prisma.user.findUnique({ where: { email }});
 
     if (user === null) {
