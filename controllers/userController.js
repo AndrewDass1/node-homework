@@ -4,9 +4,7 @@ const util = require("util");
 const scrypt = util.promisify(crypto.scrypt);
 const Joi = require("joi");
 
-// const pool = require("../db/pg-pool");
 const prisma = require("../db/prisma.js");
-
 
 async function hashPassword(password){
   const salt = crypto.randomBytes(16).toString("hex");
