@@ -10,8 +10,7 @@ const { errorHandler } = require('./middleware/error-handler');
 const authMiddleware = require("./middleware/auth");
 const taskRouter = require("./routes/taskRoutes");
 
-// const pool = require("./db/pg-pool");
-const prisma = require("./db/prisma");
+const prisma = require("../db/prisma.js");
 
 global.user_id = null;
 
@@ -55,15 +54,8 @@ const server = app.listen(port, () => {
     console.log(`Server is listening on port ${port}...`);
 });
 
-let isShuttingDown = false;
-
-async function shutdown(code = 0) {
-  if (isShuttingDown) return;
-  isShuttingDown = true;
-
-  // console.log("Shutting down gracefully...");
-  await prisma.$disconnect();
-  console.log("Prisma disconnected");
+await prisma.$disconnect();
+console.log("Prisma disconnected");
 
   try {
     await new Promise((resolve, reject) => {
@@ -72,20 +64,10 @@ async function shutdown(code = 0) {
         else resolve();
       });
     });
-    console.log("HTTP server closed.");
 
-    // Close all PostgreSQL connections after the HTTP server has stopped.
-    await pool.end();
-    console.log("PostgreSQL connection pool closed.");
   } catch (err) {
     console.error("Error during shutdown:", err);
-    code = 1;
-  } finally {
-    process.exit(code);
   }
-}
 
-process.on("SIGINT", () => shutdown(0));
-process.on("SIGTERM", () => shutdown(0));
 
 module.exports = {app, server};
