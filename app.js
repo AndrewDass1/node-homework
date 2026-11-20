@@ -54,8 +54,10 @@ const server = app.listen(port, () => {
     console.log(`Server is listening on port ${port}...`);
 });
 
-await prisma.$disconnect();
-console.log("Prisma disconnected");
+
+async function shutdown(code = 0) {
+  await prisma.$disconnect();
+  console.log("Prisma disconnected");
 
   try {
     await new Promise((resolve, reject) => {
@@ -67,7 +69,13 @@ console.log("Prisma disconnected");
 
   } catch (err) {
     console.error("Error during shutdown:", err);
+    code = 1;
+  } finally {
+    process.exit(code);
   }
+}
 
+process.on("SIGINT", () => shutdown(0));
+process.on("SIGTERM", () => shutdown(0));
 
 module.exports = {app, server};
