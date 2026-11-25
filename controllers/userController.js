@@ -35,21 +35,50 @@ async function register(req, res, next){
     const email = value.email;
     const hashedPassword = await hashPassword(value.password);
     try {
-        user = await prisma.user.create({
-            data: {name, email, hashedPassword},
-            select: {name: true, email: true, id: true}
+        const result = await prisma.$transaction(async (tx) => {
+        const user = await tx.user.create({
+                data: {name, email, hashedPassword},
+                select: {name: true, email: true, id: true}
+            })
+
+        const welcomeTaskData = [
+            {title: "Complete your profile", userId: newUser.id, priority: "medium"},
+            {title: "Add your first task", userId: newUser.id, priority: "high"},
+            {title: "Explore the app", userId: newUser.id, priority: "low"}
+        ];
+
+        await tx.task.createMany({data: welcomeTaskData});
+
+        const welcomeTasks = await tx.task.findMany({
+            where: {
+                userId: newUser.id,
+                title: { in: welcomeTaskData.map(t => title) }
+            },
+            select: {
+                id: true,
+                title: true,
+                isCompleted: true,
+                userId: true,
+                priority: true
+            }
+        });
+        return { user: newUser, welcomeTasks }
         })
-        console.log(user)
     } catch (e) {
-        if (e.code === "23505") { 
-            return res.status(400).json({message: e.message})
+        if (err.code === "P2002") {
+            return res.status(400).json({ error: "Email already registered" });
+        } else {
+            return next(err);
         }
-        if (e.name === "PrismaClientKnownRequestError" && e.code === "P2002") {
-            return res.status(400).json({
-                error: "User with this email already exists"
-            });
-        }
-    return next(e); 
+        // if (e.code === "23505") { 
+        //     return res.status(400).json({message: e.message})
+        // }
+        // if (e.name === "PrismaClientKnownRequestError" && e.code === "P2002") {
+        //     return res.status(400).json({
+        //         error: "User with this email already exists"
+        //     });
+        // }
+    // return next(e); 
     }
 
     const newUser = user;
@@ -57,10 +86,11 @@ async function register(req, res, next){
 
 
     res.status(201).json({
-        name: newUser.name,
-        email: newUser.email
-    })
-
+        user: result.user,
+        welcomeTasks: result.welcomeTasks,
+        transactionStatus: "success"
+    });
+    return;
 }
 
 async function logon(req, res){
