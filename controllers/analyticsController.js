@@ -126,55 +126,56 @@ async function getUsersWithStats(req, res) {
   });
 }
 
+async function searchTasks(req, res) {
+  const searchQuery =
+    typeof req.query.q === "string" ? req.query.q.trim() : "";
 
-async function searchTasks(req, res){
-  // Get limit from query (default to 20)
-const limit = 1; //...parse from req.query
+  if (searchQuery.length < 2) {
+    return res.status(400).json({
+      error: "Search query must be at least 2 characters long",
+    });
+  }
 
-// Construct search patterns outside the query for proper parameterization
-const searchPattern = `%${searchQuery}%`;
-const exactMatch = searchQuery;
-const startsWith = `${searchQuery}%`;
+  const requestedLimit = Number.parseInt(req.query.limit, 10);
+  const limit = Number.isInteger(requestedLimit) && requestedLimit > 0
+    ? requestedLimit
+    : 20;
 
-// Use raw SQL for complex text search with parameterized queries
-const searchResults = await prisma.$queryRaw`
-  SELECT 
-    t.id,
-    t.title,
-    t.is_completed as "isCompleted",
-    t.priority,
-    t.created_at as "createdAt",
-    t.user_id as "userId",
-    u.name as "user_name"
-  FROM tasks t
-  JOIN users u ON t.user_id = u.id
-  WHERE t.title ILIKE ${searchPattern} 
-     OR u.name ILIKE ${searchPattern}
-  ORDER BY 
-    CASE 
-      WHEN t.title ILIKE ${exactMatch} THEN 1
-      WHEN t.title ILIKE ${startsWith} THEN 2
-      WHEN t.title ILIKE ${searchPattern} THEN 3
-      ELSE 4
-    END,
-    t.created_at DESC
-  LIMIT ${parseInt(limit)}`;
+  const searchPattern = `%${searchQuery}%`;
+  const exactMatch = searchQuery;
+  const startsWith = `${searchQuery}%`;
 
-  if (!searchQuery || searchQuery.trim().length < 2) {
-  return res.status(400).json({ 
-    error: "Search query must be at least 2 characters long" 
+  const searchResults = await prisma.$queryRaw`
+    SELECT
+      t.id,
+      t.title,
+      t.is_completed AS "isCompleted",
+      t.priority,
+      t.created_at AS "createdAt",
+      t.user_id AS "userId",
+      u.name AS "user_name"
+    FROM tasks t
+    JOIN users u ON t.user_id = u.id
+    WHERE t.title ILIKE ${searchPattern}
+       OR u.name ILIKE ${searchPattern}
+    ORDER BY
+      CASE
+        WHEN t.title ILIKE ${exactMatch} THEN 1
+        WHEN t.title ILIKE ${startsWith} THEN 2
+        WHEN t.title ILIKE ${searchPattern} THEN 3
+        ELSE 4
+      END,
+      t.created_at DESC
+    LIMIT ${limit}
+  `;
+
+  return res.status(200).json({
+    results: searchResults,
+    query: searchQuery,
+    count: searchResults.length,
   });
 }
 
-
-
-
-// Return results with query and count
-// Hint: The test expects results array, query string, and count number
-res.status(200).json({
-  // ... you need to return the response object
-});
-}
 
 
 module.exports = {getUserAnalytics, getUsersWithStats, searchTasks};
