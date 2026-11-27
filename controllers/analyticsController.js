@@ -51,7 +51,7 @@ const recentTasks = await prisma.task.findMany({
 // Calculate weekly progress using groupBy
 // First, calculate the date from one week ago
 // Hint: Use new Date() and setDate() to subtract 7 days
-let oneWeekAgo;
+let oneWeekAgo = new Date;
 oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
 // Then use groupBy with a where clause filtering by createdAt >= oneWeekAgo
@@ -114,9 +114,9 @@ async function getUsersWithStats(req, res) {
   const pagination = {
       page,
       limit,
-      total: totalTasks,
-      pages: Math.ceil(totalTasks / limit),
-      hasNext: page * limit < totalTasks,
+      total: totalUsers,
+      pages: Math.ceil(totalUsers / limit),
+      hasNext: page * limit < totalUsers,
       hasPrev: page > 1
   };
 
@@ -130,7 +130,7 @@ async function getUsersWithStats(req, res) {
 
 
 
-function searchTasks(){
+function searchTasks(req, res){
   if (!searchQuery || searchQuery.trim().length < 2) {
   return res.status(400).json({ 
     error: "Search query must be at least 2 characters long" 
