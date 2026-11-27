@@ -1,11 +1,24 @@
 const { userSchema } = require("../validation/userSchema");
 const prisma = require("../db/prisma");
 
-async function getUserAnalytics() {
+async function getUserAnalytics(req, res) {
     // Parse and validate user ID
-    const userId = parseInt(req.params.id);
+    const userId = parseInt(req.params.id, 10);
+
     if (isNaN(userId)) {
-        res.status(404).json("User not found");
+        res.status(400).json({message: "Invalid user ID"});
+    }
+
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userId
+      }
+    });
+
+    if(!user) {
+      return res.status(404).json({
+        message: "User not found"
+      });
     }
 
 // Use groupBy to count tasks by completion status
@@ -59,23 +72,26 @@ return;
 
 // ----------------------------
 
-const usersRaw = await prisma.user.findMany({
-  include: {
-    Task: {
-      where: { isCompleted: false },
-      select: { id: true },
-      take: 5
-    },
-    _count: {
-      select: {
-        Task: true
+async function getUsersWithStats(req, res) {
+  const usersRaw = await prisma.user.findMany({
+    include: {
+      Task: {
+        where: { isCompleted: false },
+        select: { id: true },
+        take: 5
+      },
+      _count: {
+        select: {
+          Task: true
+        }
       }
-    }
-  },
-  skip: skip,
-  take: limit,
-  orderBy: { createdAt: 'desc' }
-});
+    },
+    skip: skip,
+    take: limit,
+    orderBy: { createdAt: 'desc' }
+  });
+}
+
 
 // Transform to only include the fields we want
 const users = usersRaw.map(user => ({
@@ -155,4 +171,4 @@ res.status(200).json({
 }
 
 
-module.exports = {getUserAnalytics, searchTasks};
+module.exports = {getUserAnalytics, getUsersWithStats, searchTasks};

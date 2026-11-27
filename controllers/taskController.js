@@ -43,10 +43,11 @@ async function index(req, res){
     };
   }
 
-  const task = await prisma.task.findMany({
-    where: {
-      userId: global.user_id,
-    }, whereClause,
+  const tasks = await prisma.task.findMany({
+    where: whereClause,
+    take: limit,
+    skip: skip,
+    orderBy: { createdAt: 'desc' },
     select: {title: true, 
       isCompleted: true, 
       id: true,
@@ -56,15 +57,12 @@ async function index(req, res){
         select: {
           name: true, email: true
         }
-      },
-      take: limit,
-      skip: skip,
-      orderBy: { createdAt: 'desc' }
+      }
     }
   });
 
   const totalTasks = await prisma.task.count({
-    where: { userId: global.user_id }, whereClause
+    where: whereClause
   });
 
   const pagination = {
@@ -76,13 +74,13 @@ async function index(req, res){
     hasPrev: page > 1
   };
 
-  if(task.length === 0){
+  if(tasks.length === 0){
     return res.status(404).json({
       message: "No matching task exists."
     })
   }
   
-  return res.status(200).json({task, pagination});
+  return res.status(200).json({tasks, pagination});
   
 }
 
