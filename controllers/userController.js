@@ -62,6 +62,16 @@ async function register(req, res, next){
                 priority: true
             }
         });
+        const newUser = user;
+        global.user_id = newUser.id;
+
+
+        res.status(201).json({
+            user: result.user,
+            welcomeTasks: result.welcomeTasks,
+            transactionStatus: "success"
+        });
+
         return { user: newUser, welcomeTasks }
         })
     } catch (e) {
@@ -80,17 +90,6 @@ async function register(req, res, next){
         // }
     // return next(e); 
     }
-
-    const newUser = user;
-    global.user_id = newUser.id;
-
-
-    res.status(201).json({
-        user: result.user,
-        welcomeTasks: result.welcomeTasks,
-        transactionStatus: "success"
-    });
-    return;
 }
 
 async function logon(req, res){
