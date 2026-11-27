@@ -66,10 +66,16 @@ async function register(req, res, next){
             }
         });
 
-        return { user: newUser, welcomeTasks }
-        })
 
-        return res.status(201).json(result);
+        res.status(201).json({
+            user: result.user,
+            welcomeTasks: result.welcomeTasks,
+            transactionStatus: "success"
+        });
+
+        }
+    )
+    return res.status(201).json(result);
     } catch (e) {
         if (e.code === "P2002") {
             return res.status(400).json({ error: "Email already registered" });

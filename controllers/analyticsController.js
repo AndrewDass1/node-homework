@@ -127,17 +127,8 @@ async function getUsersWithStats(req, res) {
 }
 
 
-
-
-
-function searchTasks(req, res){
-  if (!searchQuery || searchQuery.trim().length < 2) {
-  return res.status(400).json({ 
-    error: "Search query must be at least 2 characters long" 
-  });
-}
-
-// Get limit from query (default to 20)
+async function searchTasks(req, res){
+  // Get limit from query (default to 20)
 const limit = 1; //...parse from req.query
 
 // Construct search patterns outside the query for proper parameterization
@@ -167,8 +158,16 @@ const searchResults = await prisma.$queryRaw`
       ELSE 4
     END,
     t.created_at DESC
-  LIMIT ${parseInt(limit)}
-`;
+  LIMIT ${parseInt(limit)}`;
+
+  if (!searchQuery || searchQuery.trim().length < 2) {
+  return res.status(400).json({ 
+    error: "Search query must be at least 2 characters long" 
+  });
+}
+
+
+
 
 // Return results with query and count
 // Hint: The test expects results array, query string, and count number
