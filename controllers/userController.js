@@ -74,7 +74,7 @@ async function register(req, res, next){
         if (e.code === "P2002") {
             return res.status(400).json({ error: "Email already registered" });
         } else {
-            return next(err);
+            return next(e);
         }
     }
 }
