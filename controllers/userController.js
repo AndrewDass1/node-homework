@@ -66,30 +66,16 @@ async function register(req, res, next){
             }
         });
 
-
-        res.status(201).json({
-            user: result.user,
-            welcomeTasks: result.welcomeTasks,
-            transactionStatus: "success"
-        });
-
         return { user: newUser, welcomeTasks }
         })
+
+        return res.status(201).json(result);
     } catch (e) {
-        if (err.code === "P2002") {
+        if (e.code === "P2002") {
             return res.status(400).json({ error: "Email already registered" });
         } else {
             return next(err);
         }
-        // if (e.code === "23505") { 
-        //     return res.status(400).json({message: e.message})
-        // }
-        // if (e.name === "PrismaClientKnownRequestError" && e.code === "P2002") {
-        //     return res.status(400).json({
-        //         error: "User with this email already exists"
-        //     });
-        // }
-    // return next(e); 
     }
 }
 
