@@ -51,7 +51,8 @@ const recentTasks = await prisma.task.findMany({
 // Calculate weekly progress using groupBy
 // First, calculate the date from one week ago
 // Hint: Use new Date() and setDate() to subtract 7 days
-const oneWeekAgo = new Date() - setDate(7); // ... you need to calculate this
+let oneWeekAgo;
+oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
 // Then use groupBy with a where clause filtering by createdAt >= oneWeekAgo
 const weeklyProgress = await prisma.task.groupBy({
@@ -73,6 +74,10 @@ return;
 // ----------------------------
 
 async function getUsersWithStats(req, res) {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
+
   const usersRaw = await prisma.user.findMany({
     include: {
       Task: {
@@ -90,37 +95,39 @@ async function getUsersWithStats(req, res) {
     take: limit,
     orderBy: { createdAt: 'desc' }
   });
+
+  // Transform to only include the fields we want
+  const users = usersRaw.map(user => ({
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    createdAt: user.createdAt,
+    _count: user._count,
+    Task: user.Task
+  }));
+
+  // Get total count for pagination
+  const totalUsers = await prisma.user.count();
+
+  // Build pagination object with page, limit, total, pages, hasNext, hasPrev
+  // Hint: Use Math.ceil() for pages, compare page * limit with total for hasNext
+  const pagination = {
+      page,
+      limit,
+      total: totalTasks,
+      pages: Math.ceil(totalTasks / limit),
+      hasNext: page * limit < totalTasks,
+      hasPrev: page > 1
+  };
+
+  // Return users and pagination
+  res.status(200).json({
+    users, pagination
+  });
 }
 
 
-// Transform to only include the fields we want
-const users = usersRaw.map(user => ({
-  id: user.id,
-  name: user.name,
-  email: user.email,
-  createdAt: user.createdAt,
-  _count: user._count,
-  Task: user.Task
-}));
 
-// Get total count for pagination
-const totalUsers = await prisma.user.count();
-
-// Build pagination object with page, limit, total, pages, hasNext, hasPrev
-// Hint: Use Math.ceil() for pages, compare page * limit with total for hasNext
-const pagination = {
-    page,
-    limit,
-    total: totalTasks,
-    pages: Math.ceil(totalTasks / limit),
-    hasNext: page * limit < totalTasks,
-    hasPrev: page > 1
-};
-
-// Return users and pagination
-res.status(200).json({
-  users, pagination
-});
 
 
 function searchTasks(){
