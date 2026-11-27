@@ -41,6 +41,9 @@ async function register(req, res, next){
                 select: {name: true, email: true, id: true}
             })
 
+        const newUser = user;
+        global.user_id = newUser.id;
+
         const welcomeTaskData = [
             {title: "Complete your profile", userId: newUser.id, priority: "medium"},
             {title: "Add your first task", userId: newUser.id, priority: "high"},
@@ -52,7 +55,7 @@ async function register(req, res, next){
         const welcomeTasks = await tx.task.findMany({
             where: {
                 userId: newUser.id,
-                title: { in: welcomeTaskData.map(t => title) }
+                title: { in: welcomeTaskData.map(t => t.title) }
             },
             select: {
                 id: true,
@@ -62,8 +65,6 @@ async function register(req, res, next){
                 priority: true
             }
         });
-        const newUser = user;
-        global.user_id = newUser.id;
 
 
         res.status(201).json({
