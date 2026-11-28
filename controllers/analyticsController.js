@@ -6,7 +6,7 @@ async function getUserAnalytics(req, res) {
     const userId = parseInt(req.params.id, 10);
 
     if (isNaN(userId)) {
-        res.status(400).json({message: "Invalid user ID"});
+        return res.status(400).json({message: "Invalid user ID"});
     }
 
     const user = await prisma.user.findUnique({

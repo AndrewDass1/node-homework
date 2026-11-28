@@ -104,7 +104,7 @@ async function show(req, res){
     {  return res.status(200).json({message: task}) }
 }
 
-async function update(req, res){
+async function update(req, res, next){
   const { error, value } = patchTaskSchema.validate(req.body, {abortEarly: false,});
 
   if (error) {
@@ -132,7 +132,7 @@ async function update(req, res){
       return res.status(404).json({ message: "The task was not found."})
     }
     else {
-      return res.status(404).json({message: "The task was not found."})
+      return next(error);
     } 
   }
 }
