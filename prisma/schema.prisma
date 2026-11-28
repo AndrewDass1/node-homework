@@ -17,6 +17,7 @@ model Task {
   User         User     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("tasks")
+  @@unique([id, userId])
 }
 
 model User {
