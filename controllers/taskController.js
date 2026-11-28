@@ -23,7 +23,7 @@ async function create(req, res){
       data: { ...value,
         userId: global.user_id,
       },
-      select: { title: true, isCompleted: true, userId: true, id: true }
+      select: { title: true, isCompleted: true, userId: true, id: true, priority: true }
   });
 
   return res.status(201).json(task)
@@ -93,7 +93,10 @@ async function show(req, res){
           id: taskId,
           userId: global.user_id
         }
-      }
+      },
+      include: {
+        User: true,
+      },
   });
 
 
@@ -122,7 +125,7 @@ async function update(req, res, next){
           userId: global.user_id
         }
       },
-      select: { title: true, isCompleted: true, id: true }
+      select: { title: true, isCompleted: true, id: true, priority: true }
 
       
     });
